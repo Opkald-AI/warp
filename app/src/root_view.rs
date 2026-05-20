@@ -556,15 +556,22 @@ pub fn workspace_for_window(
 }
 
 fn open_launch_config(arg: &OpenLaunchConfigArg, ctx: &mut AppContext) {
-    let active_window_workspace = active_workspace(ctx);
+    // For `open_in_active_window`, try the focused window first; if no window
+    // is focused (e.g. URL fired from background process), fall back to any
+    // existing window's workspace so the tab still attaches instead of
+    // spawning a brand new window.
+    let target_workspace = active_workspace(ctx).or_else(|| {
+        let ids: Vec<_> = ctx.window_ids().collect();
+        ids.into_iter().find_map(|id| workspace_for_window(id, ctx))
+    });
     if arg.launch_config.windows.is_empty() {
         open_new(&(), ctx);
     } else if arg.open_in_active_window
         && arg.launch_config.windows.len() == 1
-        && active_window_workspace.is_some()
+        && target_workspace.is_some()
     {
-        active_window_workspace
-            .expect("already checked if there is a workspace for the active window")
+        target_workspace
+            .expect("already checked if there is a workspace for the target window")
             .update(ctx, |workspace, ctx| {
                 workspace.open_launch_config_window(arg.launch_config.windows[0].clone(), ctx)
             });

@@ -168,12 +168,19 @@ impl UriHost {
                     if let Some(config) =
                         find_matching_config(desired_config_path.as_str(), &configs)
                     {
+                        // `?active=true` opens into the active window as a
+                        // tab instead of spawning a new window. Only
+                        // meaningful for single-window launch configs (see
+                        // `OpenLaunchConfigArg::open_in_active_window`).
+                        let open_in_active_window = url
+                            .query_pairs()
+                            .any(|(k, v)| k == "active" && v == "true");
                         ctx.dispatch_global_action(
                             "root_view:open_launch_config",
                             &OpenLaunchConfigArg {
                                 launch_config: config.clone(),
                                 ui_location: LaunchConfigUiLocation::Uri,
-                                open_in_active_window: false,
+                                open_in_active_window,
                             },
                         )
                     } else {
