@@ -17443,6 +17443,12 @@ impl Workspace {
             );
         }
 
+        target.add_child(
+            Container::new(self.render_symphony_autopilot_button(appearance))
+                .with_margin_left(TAB_BAR_PADDING_LEFT)
+                .finish(),
+        );
+
         if FeatureFlag::AvatarInTabBar.is_enabled() {
             target.add_child(
                 Container::new(self.render_avatar_button(appearance, ctx))
@@ -17913,6 +17919,73 @@ impl Workspace {
                 false,
             )
             .finish(),
+        )
+        .finish()
+    }
+
+    /// Always-visible top-bar toggle for Symphony autopilot. Clicking it runs
+    /// `symphony autopilot toggle`, which flips ~/.symphony/control.json; the
+    /// running Symphony daemon honours it live (no restart).
+    fn render_symphony_autopilot_button(&self, appearance: &Appearance) -> Box<dyn Element> {
+        // Read the live state from ~/.symphony/control.json so the button
+        // reflects on/off. None = unknown (file not written yet) -> neutral.
+        let autopilot_on: Option<bool> = dirs::home_dir()
+            .map(|h| h.join(".symphony").join("control.json"))
+            .and_then(|p| std::fs::read_to_string(p).ok())
+            .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+            .and_then(|v| v.get("autopilot_enabled").and_then(|b| b.as_bool()));
+
+        let label = match autopilot_on {
+            Some(true) => "⏻ Autopilot: ON",
+            Some(false) => "⏻ Autopilot: OFF",
+            None => "⏻ Autopilot",
+        };
+
+        let theme = appearance.theme();
+        let default_styles = UiComponentStyles {
+            // ON in the accent color, OFF/unknown dimmed.
+            font_color: Some(match autopilot_on {
+                Some(true) => theme.accent().into(),
+                _ => theme.sub_text_color(theme.background()).into(),
+            }),
+            font_size: Some(12.),
+            font_weight: Some(Weight::Light),
+            font_family_id: Some(appearance.ui_font_family()),
+            border_color: Some(match autopilot_on {
+                Some(true) => theme.accent().into(),
+                _ => theme.surface_2().into(),
+            }),
+            border_radius: Some(CornerRadius::with_all(Radius::Pixels(5.))),
+            border_width: Some(1.),
+            height: Some(24.),
+            ..Default::default()
+        };
+        let hovered_styles = UiComponentStyles {
+            font_color: Some(theme.accent().into()),
+            border_color: Some(theme.accent().into()),
+            ..default_styles
+        };
+        let button = appearance
+            .ui_builder()
+            .button_with_custom_styles(
+                ButtonVariant::Text,
+                self.mouse_states.symphony_autopilot_icon.clone(),
+                default_styles,
+                Some(hovered_styles),
+                Some(hovered_styles),
+                None,
+            )
+            .with_centered_text_label(String::from(label));
+
+        Align::new(
+            button
+                .build()
+                .on_click(|_ctx, _, _| {
+                    let _ = std::process::Command::new("symphony")
+                        .args(["autopilot", "toggle"])
+                        .spawn();
+                })
+                .finish(),
         )
         .finish()
     }
