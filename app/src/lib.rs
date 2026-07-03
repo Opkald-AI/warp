@@ -823,13 +823,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
 
     // Collect errors that occur in run_internal() before the Sentry client is initialized,
     // so they can be replayed to Sentry once it's ready.
-    #[cfg_attr(
-        not(all(
-            feature = "release_bundle",
-            any(windows, any(target_os = "linux", target_os = "freebsd"))
-        )),
-        expect(unused_mut)
-    )]
+    #[allow(unused_mut)]
     let mut pre_sentry_errors: Vec<anyhow::Error> = Vec::new();
 
     #[cfg(all(
@@ -858,7 +852,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         }
     }
 
-    #[cfg(all(feature = "release_bundle", windows))]
+    #[cfg(windows)]
     if let LaunchMode::App { .. } = launch_mode {
         match app_services::windows::pass_startup_args_to_existing_instance(
             launch_mode.args().as_ref(),
