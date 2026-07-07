@@ -31,6 +31,7 @@ pub(super) struct WorkspaceMouseStates {
     pub(super) agent_management_view_button: MouseStateHandle,
     pub(super) left_panel_icon: MouseStateHandle,
     pub(super) settings_icon: MouseStateHandle,
+    pub(super) symphony_autopilot_icon: MouseStateHandle,
     pub(super) dismiss_banner_button: MouseStateHandle,
     pub(super) sign_in_button: MouseStateHandle,
     pub(super) sign_up_button: MouseStateHandle,
