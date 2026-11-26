@@ -1,0 +1,24 @@
+# Gitleaks config (KLI-1484, ISO 27001 A.8.12 / IC-07).
+# It uses all default Gitleaks rules. Allowlist only proven false positives,
+# by path or by rule plus path. Never allowlist a secret value.
+title = "Opkald-AI gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Upstream Warp test fixtures and bundled skill docs with fake or public example tokens"
+paths = [
+  '''^app/src/terminal/model/secrets_test\.rs$''',
+  '''^app/src/ai/blocklist/block/secret_redaction_test\.rs$''',
+  '''^crates/integration/src/test/secrets\.rs$''',
+  '''^resources/bundled/mcp_skills/figma/''',
+  '''^resources/bundled/skills/oz-platform/SKILL\.md$''',
+]
+
+[[allowlists]]
+description = "Upstream Warp public Firebase browser key"
+targetRules = ["gcp-api-key", "generic-api-key"]
+paths = [
+  '''^crates/warp_core/src/channel/config\.rs$''',
+]
